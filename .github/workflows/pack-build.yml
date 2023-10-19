@@ -1,0 +1,76 @@
+name: Packer Build
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  packagebuild:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          clean: false
+
+      - name: Set up JDK 17
+
+        uses: actions/setup-java@v2
+
+        with:
+          java-version: "17"
+
+          distribution: "temurin"
+
+          cache: maven
+
+      - name: Build with Maven (skip tests)
+        run: mvn clean install -DskipTests
+        working-directory: demo
+
+      - name: Package with Maven
+        run: mvn -B package --file pom.xml -DskipTests
+        working-directory: demo
+
+      - name: Upload jar file
+        uses: actions/upload-artifact@v2
+        with:
+          name: webapp-artifact
+          path: demo/target
+
+      - name: Testing
+        run: |
+          pwd
+          ls -al
+
+      - name: Run `packer init`
+        id: init
+        working-directory: demo
+        run: "packer init ami.pkr.hcl"
+
+      - name: Validate Packer Template
+        uses: hashicorp/packer-github-actions@master
+        with:
+          command: validate
+          target: demo/ami.pkr.hcl
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+          working-directory: demo
+
+      - name: Download jar file
+        uses: actions/download-artifact@v2
+        with:
+          name: webapp-artifact
+
+      - name: Packer build
+        uses: hashicorp/packer-github-actions@master
+        with:
+          command: build
+          working-directory: demo
+          target: demo/ami.pkr.hcl
+        env:
+          PACKER_LOG: 1
+          AWS_ACCESS_KEY_ID: AKIA4ZBHDPFNY5LL23X5
+          AWS_SECRET_ACCESS_KEY: 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
+          AWS_DEFAULT_REGION: us-west-2

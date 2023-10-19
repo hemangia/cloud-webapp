@@ -1,0 +1,56 @@
+name: Packer validate
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up JDK 17
+
+        uses: actions/setup-java@v2
+
+        with:
+          java-version: "17"
+
+          distribution: "temurin"
+
+          cache: maven
+
+      - name: Build with Maven (skip tests)
+        run: mvn clean install -DskipTests
+        working-directory: demo
+
+      - name: Package with Maven
+        run: mvn -B package --file pom.xml -DskipTests
+        working-directory: demo
+
+      - name: Upload jar file
+        uses: actions/upload-artifact@v2
+        with:
+          name: webapp-artifact
+          path: demo/target
+
+      - name: Testing
+        run: |
+          pwd
+          ls -al
+
+      - name: Validate Packer Template
+        uses: hashicorp/packer-github-actions@master
+        with:
+          command: validate
+          target: demo/ami.pkr.hcl
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+          working-directory: demo

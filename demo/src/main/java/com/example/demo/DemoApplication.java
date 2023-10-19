@@ -29,16 +29,18 @@ public class DemoApplication {
 
 
 	public static void main(String[] args) {
-        ConfigurableApplicationContext context = SpringApplication.run(DemoApplication.class, args);
+        ConfigurableApplicationContext context = SpringApplication.run(DemoApplication.class,args);
         AccountService accountService = context.getBean(AccountService.class);
 
         try {
-           System.out.println("Try again");
-            Resource resource = context.getResource("classpath:inputfiles/users.csv");
-            InputStream inputStream = resource.getInputStream();
+           
+        	String filePath = "./users.csv";
+            InputStream inputStream = Files.newInputStream(Paths.get(filePath));
 
             accountService.loadAccountsFromCSV(inputStream);
+
             inputStream.close();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
