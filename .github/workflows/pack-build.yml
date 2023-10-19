@@ -71,6 +71,6 @@ jobs:
           target: demo/ami.pkr.hcl
         env:
           PACKER_LOG: 1
-          AWS_ACCESS_KEY_ID: AKIA4ZBHDPFNY5LL23X5
-          AWS_SECRET_ACCESS_KEY: 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
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
           AWS_DEFAULT_REGION: us-west-2
