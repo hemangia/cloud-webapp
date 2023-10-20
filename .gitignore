@@ -2,6 +2,7 @@
 *.class
 *.log
 *.ctxt
+.mvn/
 .mtj.tmp/
 .DS_Store
 mvnw
