@@ -6,6 +6,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -79,7 +80,7 @@ public class AssignmentController {
 	// Get Assignment by id
 	  @GetMapping("/{id}")
 	  public ResponseEntity<Assignment> getAssignmentById(
-	      @PathVariable(value = "id") long id,
+	      @PathVariable(value = "id") UUID id,
 	      @RequestHeader(name = HttpHeaders.AUTHORIZATION) String authorizationHeader
 	  ) {
 	      // Extract the Basic Auth credentials from the header
@@ -108,7 +109,7 @@ public class AssignmentController {
 
 	
 	@PostMapping
-	public ResponseEntity<Void> createUser(
+	public ResponseEntity createUser(
 	    @RequestBody Assignment assignment,
 	    @RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader
 	) {
@@ -160,139 +161,131 @@ public class AssignmentController {
 	    return new String[0];
 	}
 	
-	 @PutMapping("/{id}")
-	    public ResponseEntity<Assignment> updateUser(
-	        @RequestBody Assignment updatedAssignment,
-	        @PathVariable("id") long id,
-	        @RequestHeader(name = HttpHeaders.AUTHORIZATION) String authorizationHeader
-	    ) {
-	        // Extract the Basic Auth credentials from the header
-	        String[] credentials = extractBasicAuthCredentials(authorizationHeader);
+	@PutMapping("/{id}")
+	public ResponseEntity<Assignment> updateUser(
+	    @RequestBody Assignment updatedAssignment,
+	    @PathVariable("id") UUID id, // Change the data type to UUID
+	    @RequestHeader(name = HttpHeaders.AUTHORIZATION) String authorizationHeader
+	) {
+	    // Extract the Basic Auth credentials from the header
+	    String[] credentials = extractBasicAuthCredentials(authorizationHeader);
 
-	        if (credentials.length == 2) {
-	            String username = credentials[0];
-	            String password = credentials[1];
+	    if (credentials.length == 2) {
+	        String username = credentials[0];
+	        String password = credentials[1];
 
-	            boolean isAuthenticated = authService.authenticate(username, password);
+	        boolean isAuthenticated = authService.authenticate(username, password);
 
-	            if (isAuthenticated) {
-	                // Check if the authenticated user matches the creator of the assignment
-	                boolean isAuthorized = userIsAuthorizedToUpdateAssignment(id, username);
+	        if (isAuthenticated) {
+	            // Check if the authenticated user matches the creator of the assignment
+	            boolean isAuthorized = userIsAuthorizedToUpdateAssignment(id, username);
 
-	                if (isAuthorized) {
-	                    Assignment existingAssignment = this.assignmentRepository.findById(id)
-	                            .orElseThrow(() -> new AssignmentNotFoundException("Assignment not found with id: " + id));
+	            if (isAuthorized) {
+	                Assignment existingAssignment = this.assignmentRepository.findById(id)
+	                        .orElseThrow(() -> new AssignmentNotFoundException("Assignment not found with id: " + id.toString()));
 
-	                    // Update the fields of the existing assignment with the values from the updatedAssignment
-	                    existingAssignment.setName(updatedAssignment.getName());
-	                    existingAssignment.setPoints(updatedAssignment.getPoints());
-	                    existingAssignment.setNoofattempts(updatedAssignment.getNoofattempts());
-	                    existingAssignment.setDeadline(updatedAssignment.getDeadline());
+	                // Update the fields of the existing assignment with the values from the updatedAssignment
+	                existingAssignment.setName(updatedAssignment.getName());
+	                existingAssignment.setPoints(updatedAssignment.getPoints());
+	                existingAssignment.setNoofattempts(updatedAssignment.getNoofattempts());
+	                existingAssignment.setDeadline(updatedAssignment.getDeadline());
 
-	                    // Save the updated assignment
-	                    Assignment savedAssignment = assignmentRepository.save(existingAssignment);
+	                // Save the updated assignment
+	                Assignment savedAssignment = assignmentRepository.save(existingAssignment);
 
-	                    return ResponseEntity.ok(savedAssignment);
-	                } else {
-	                    // User is not authorized to update this assignment
-	                    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-	                }
+	                return ResponseEntity.ok(savedAssignment);
 	            } else {
-	                // Authentication failed
-	                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+	                // User is not authorized to update this assignment
+	                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 	            }
 	        } else {
-	            // Invalid Authorization header
+	            // Authentication failed
 	            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 	        }
+	    } else {
+	        // Invalid Authorization header
+	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 	    }
+	}
 	
 	
-	// Delete assignment
-	 @DeleteMapping("/{id}")
-	 public ResponseEntity<Void> deleteUser(
-	     @PathVariable("id") long id,
-	     @RequestHeader(name = HttpHeaders.AUTHORIZATION) String authorizationHeader
-	 ) {
-	     // Extract the Basic Auth credentials from the header
-	     String[] credentials = extractBasicAuthCredentials(authorizationHeader);
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> deleteUser(
+	    @PathVariable("id") UUID id,
+	    @RequestHeader(name = HttpHeaders.AUTHORIZATION) String authorizationHeader
+	) {
+	    // Extract the Basic Auth credentials from the header
+	    String[] credentials = extractBasicAuthCredentials(authorizationHeader);
 
-	     if (credentials.length == 2) {
-	         String username = credentials[0];
-	         String password = credentials[1];
+	    if (credentials.length == 2) {
+	        String username = credentials[0];
+	        String password = credentials[1];
 
-	         boolean isAuthenticated = authService.authenticate(username, password);
+	        boolean isAuthenticated = authService.authenticate(username, password);
 
-	         if (isAuthenticated) {
-	             // Check if the authenticated user matches the creator of the assignment
-	             boolean isAuthorized = userIsAuthorizedToDeleteAssignment(id, username);
+	        if (isAuthenticated) {
+	            // Check if the authenticated user matches the creator of the assignment
+	            boolean isAuthorized = userIsAuthorizedToDeleteAssignment(id, username);
 
-	             if (isAuthorized) {
-	                 try {
-	                     // Attempt to delete the assignment
-	                     assignmentRepository.deleteById(id);
-	                     return ResponseEntity.noContent().build();
-	                 } catch (EmptyResultDataAccessException e) {
-	                     // Assignment with the given ID was not found
-	                     return ResponseEntity.notFound().build();
-	                 }
-	             } else {
-	                 // User is not authorized to delete this assignment
-	                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-	             }
-	         } else {
-	             // Authentication failed
-	             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-	         }
-	     } else {
-	         // Invalid Authorization header
-	         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-	     }
-	 }
+	            if (isAuthorized) {
+	                try {
+	                    // Attempt to delete the assignment
+	                    assignmentRepository.deleteById(id);
+	                    return ResponseEntity.noContent().build();
+	                } catch (EmptyResultDataAccessException e) {
+	                    // Assignment with the given ID was not found
+	                    return ResponseEntity.notFound().build();
+	                }
+	            } else {
+	                // User is not authorized to delete this assignment
+	                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+	            }
+	        } else {
+	            // Authentication failed
+	            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+	        }
+	    } else {
+	        // Invalid Authorization header
+	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+	    }
+	}
+
 
 	 
 
-private boolean userIsAuthorizedToDeleteAssignment(Assignment assignment, String username) {
-    // Implement your authorization logic here
-    // For example, check if the assignment's associated account's email matches the username
-    // Return true if authorized, false otherwise
-    if (assignment.getAccount() != null && assignment.getAccount().getEmail() != null) {
-        return assignment.getAccount().getEmail().equals(username);
-    }
-    return false; // Default to false if the assignment or associated account is null
-}
+	private boolean userIsAuthorizedToDeleteAssignment(UUID assignmentId, String username) {
+	 
+	    Optional<Assignment> assignmentOptional = assignmentRepository.findById(assignmentId);
 
-private boolean userIsAuthorizedToDeleteAssignment(long assignmentId, String username) {
-    // Step 1: Get the Assignment by its ID
+	    if (assignmentOptional.isPresent()) {
+	        Assignment assignment = assignmentOptional.get();
+	        
+	     
+	        return assignment.getAccount() != null && assignment.getAccount().getEmail() != null &&
+	               assignment.getAccount().getEmail().equals(username);
+	    } else {
+	      
+	        return false;
+	    }
+	}
+
+
+
+
+private boolean userIsAuthorizedToUpdateAssignment(UUID assignmentId, String username) {
+   
     Optional<Assignment> assignmentOptional = assignmentRepository.findById(assignmentId);
 
     if (assignmentOptional.isPresent()) {
         Assignment assignment = assignmentOptional.get();
         
-        // Step 2: Check if the authenticated user's username matches the Assignment's username
+       
         return assignment.getAccount().getEmail().equals(username);
     } else {
-        // Step 3: Assignment with the given ID was not found
+   
         return false;
     }
 }
-
-
-private boolean userIsAuthorizedToUpdateAssignment(long assignmentId, String username) {
-    // Step 1: Get the Assignment by its ID
-    Optional<Assignment> assignmentOptional = assignmentRepository.findById(assignmentId);
-
-    if (assignmentOptional.isPresent()) {
-        Assignment assignment = assignmentOptional.get();
-        
-        // Step 2: Check if the authenticated user's username matches the Assignment's username
-        return assignment.getAccount().getEmail().equals(username);
-    } else {
-        // Step 3: Assignment with the given ID was not found
-        return false;
-    }
-}
-
 
 
 

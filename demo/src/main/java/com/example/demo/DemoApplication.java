@@ -25,26 +25,24 @@ import org.springframework.core.io.ResourceLoader;
 @ComponentScan(basePackages = "com.example.demo")
 public class DemoApplication {
 	@Autowired
-    private ResourceLoader resourceLoader;
+	 private ResourceLoader resourceLoader;
 
 
-	public static void main(String[] args) {
-        ConfigurableApplicationContext context = SpringApplication.run(DemoApplication.class,args);
-        AccountService accountService = context.getBean(AccountService.class);
+		public static void main(String[] args) {
+	        ConfigurableApplicationContext context = SpringApplication.run(DemoApplication.class,args);
+	        AccountService accountService = context.getBean(AccountService.class);
 
-        try {
-           
-        	String filePath = "./users.csv";
-            InputStream inputStream = Files.newInputStream(Paths.get(filePath));
+	        try {
+	           
+	            Resource resource = context.getResource("classpath:inputfiles/users.csv");
+	            InputStream inputStream = resource.getInputStream();
 
-            accountService.loadAccountsFromCSV(inputStream);
-
-            inputStream.close();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+	            accountService.loadAccountsFromCSV(inputStream);
+	            inputStream.close();
+	        } catch (IOException e) {
+	            e.printStackTrace();
+	        }
+	    }
 
 
-}
+	}

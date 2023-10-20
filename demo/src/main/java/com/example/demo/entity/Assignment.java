@@ -2,6 +2,8 @@ package com.example.demo.entity;
 
 import java.util.Date;
 
+import org.hibernate.annotations.GenericGenerator;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,14 +17,16 @@ import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-
+import java.util.UUID;
 
 @Entity
 @Table(name="assignment")
 public class Assignment {
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	private long assignment_id;
+    @GeneratedValue(generator = "uuid2")
+    @GenericGenerator(name = "uuid2", strategy = "uuid2")
+    @Column(columnDefinition = "BINARY(16)")
+    private UUID assignment_id;
 
 	private String name;
 	  
@@ -53,13 +57,17 @@ public class Assignment {
 	   
 
 
-	public long getAssignment_id() {
+
+
+	public UUID getAssignment_id() {
 		return assignment_id;
 	}
 
-	public void setAssignment_id(long assignment_id) {
+	public void setAssignment_id(UUID assignment_id) {
 		this.assignment_id = assignment_id;
 	}
+
+
 
 	public String getName() {
 		return name;
