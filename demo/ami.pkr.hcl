@@ -14,13 +14,31 @@ variable "subnet_id" {
   type    = string
   default = "subnet-04885b32aa1bb325d"
 }
+variable "profile" {
+  type    = string
+  default = "devuser"
+}
+variable "aws_devuser" {
+  type    = string
+  default = "878402828635"
+}
+
+variable "aws_demouser" {
+  type    = string
+  default = "286957373320"
+}
 
 source "amazon-ebs" "my-ami" {
   region          = "${var.aws_region}"
+   profile         = "${var.profile}"
   ami_name        = "csye6225Ami_${formatdate("YYYY_MM_DD_hh_mm_ss", timestamp())}"
   ami_description = "AMI for test CSYE 6225"
   ami_regions = [
     "us-west-2",
+  ]
+    ami_users = [
+    "${var.aws_devuser}",
+    "${var.aws_demouser}",
   ]
 
   aws_polling {
