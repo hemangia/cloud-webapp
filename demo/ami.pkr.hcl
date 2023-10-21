@@ -34,7 +34,9 @@ source "amazon-ebs" "my-ami" {
   ami_name        = "csye6225Ami_${formatdate("YYYY_MM_DD_hh_mm_ss", timestamp())}"
   ami_description = "AMI for test CSYE 6225"
   ami_regions = [
-    "us-west-2"
+    "us-west-2",
+    "us-west-1",
+
   ]
     ami_users = [
     "${var.aws_devuser}",
