@@ -6,6 +6,7 @@ on:
 
 jobs:
   build:
+    name: pack validate
     runs-on: ubuntu-latest
 
     permissions:
