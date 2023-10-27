@@ -35,12 +35,10 @@ source "amazon-ebs" "my-ami" {
   ami_description = "AMI for test CSYE 6225"
   ami_regions = [
     "us-west-2",
-    "us-west-1",
 
   ]
     ami_users = [
     "${var.aws_devuser}",
-    "${var.aws_demouser}",
   ]
 
   aws_polling {
@@ -75,7 +73,7 @@ build {
       "CHECKPOINT_DISABLE=1"
     ]
      inline = [
-    "sudo apt-get update",
+        "sudo apt-get update",
     "sudo apt-get upgrade -y",
     "sudo apt-get clean",
     "sudo apt update",
@@ -88,32 +86,35 @@ build {
     "sudo ln -s /usr/share/apache-tomcat-$TOMCAT_VERSION/ /usr/share/tomcat",
     "sudo chown -R tomcat:tomcat /usr/share/tomcat",
     "sudo chown -R tomcat:tomcat /usr/share/apache-tomcat-$TOMCAT_VERSION/",
-    "echo -e '[Unit]\nDescription=Tomcat Server\nAfter=syslog.target network.target\n\n[Service]\nType=forking\nUser=tomcat\nGroup=tomcat\n\nEnvironment=JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64\nEnvironment=JAVA_OPTS=-Djava.awt.headless=true\nEnvironment=CATALINA_HOME=/usr/share/tomcat\nEnvironment=CATALINA_BASE=/usr/share/tomcat\nEnvironment=CATALINA_PID=/usr/share/tomcat/temp/tomcat.pid\nEnvironment=CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC\n\nExecStart=/usr/share/tomcat/bin/startup.sh\nExecStop=/usr/share/tomcat/bin/shutdown.sh\n\n[Install]\nWantedBy=multi-user.target\n' | sudo tee /etc/systemd/system/tomcat.service",
-    "sudo systemctl daemon-reload",
+   "echo -e '[Unit]\nDescription=Tomcat Server\nAfter=syslog.target network.target cloud-init.target\n\n[Service]\nType=forking\nUser=tomcat\nGroup=tomcat\n\nEnvironment=JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64\nEnvironment=JAVA_OPTS=-Djava.awt.headless=true\nEnvironment=CATALINA_HOME=/usr/share/tomcat\nEnvironment=CATALINA_BASE=/usr/share/tomcat\nEnvironment=CATALINA_PID=/usr/share/tomcat/temp/tomcat.pid\nEnvironment=CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC\n\nExecStart=/usr/share/tomcat/bin/startup.sh\nExecStop=/usr/share/tomcat/bin/shutdown.sh\n\n[Install]\nWantedBy=cloud-init.target\n' | sudo tee /etc/systemd/system/tomcat.service",
+   "sudo systemctl daemon-reload",
     "sudo systemctl start tomcat.service",
     "sudo systemctl enable tomcat.service",
     "sudo systemctl status tomcat.service",
+    "ss -ltn",
     "sudo ufw allow 8080/tcp",
     "sudo apt-get install nginx -y",
-    "sudo apt-cache search mysql-server",
-    "sudo apt info -a mysql-server-8.0",
-    "sudo apt-get install mysql-server-8.0 -y",
-    "sudo systemctl is-enabled mysql.service",
-    "sudo systemctl start mysql.service",
-    "sudo systemctl status mysql.service",
-    "export pwd=Test1234",
-    "echo $pwd",
-   "sudo mysql -uroot -p$pwd --connect-expired-password -e \"ALTER USER 'root'@'localhost' IDENTIFIED WITH 'mysql_native_password' BY 'Test1234'\"",
-    "sudo systemctl restart mysql.service",
-    "sudo systemctl status mysql.service",
-    "sudo mysql -uroot -pTest1234 -e \"CREATE DATABASE IF NOT EXISTS restDemo\"",
     "sudo apt install maven -y",
+    "sudo pwd",
+    "sudo ls -lrt",
     "sudo mkdir -p /opt/webapps",
     "sudo chmod 755 /opt/webapps",
+    "sudo groupadd -r appgroup",
+    "sudo useradd -d /opt/webapps -r -s /bin/false -g appgroup devappuser",
+ "echo -e '\n[Unit]\nDescription=Manage JAVA service\n\n[Service]\nWorkingDirectory=/opt/webapps\nExecStart=/bin/java -jar /opt/webapps/demo-0.0.1-SNAPSHOT.jar -Dspring.config.location=file:/opt/webapps/application.properties\nType=simple\nUser=devappuser\nGroup=appgroup\nRestart=on-failure\nRestartSec=10\n\n[Install]\nWantedBy=cloud-init.target\n' | sudo tee /etc/systemd/system/myapp.service",
+     "sudo chown -R devappuser:appgroup /opt/webapps",
+    "sudo pwd",
+    "sudo ls -lrt",
+    "sudo pwd",
     "sudo cp /home/ubuntu/demo-0.0.1-SNAPSHOT.jar /opt/webapps/.",
     "cd /opt/webapps",
+    "sudo pwd",
     "ls -lrt",
-    "sudo chmod 755 demo-0.0.1-SNAPSHOT.jar"
+    "sudo chmod 755 demo-0.0.1-SNAPSHOT.jar",
+    "sudo systemctl daemon-reload",
+    "sudo systemctl start myapp.service",
+    "sudo systemctl enable myapp.service",
+    "sudo systemctl status myapp.service"
   ]
 }
 
