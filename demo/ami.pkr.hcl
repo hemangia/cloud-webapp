@@ -57,7 +57,7 @@ source "amazon-ebs" "my-ami" {
     volume_size           = 25
     volume_type           = "gp2"
   }
-}
+                  }
 
 build {
   sources = ["source.amazon-ebs.my-ami"]
