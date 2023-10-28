@@ -46,6 +46,10 @@ jobs:
           pwd
           ls -al
 
+      - name: Format Packer Template
+        run: |
+          cd demo && packer fmt ami.pkr.hcl
+
       - name: Validate Packer Template
         uses: hashicorp/packer-github-actions@master
         with:
