@@ -63,7 +63,7 @@ build {
   sources = ["source.amazon-ebs.my-ami"]
   
    provisioner "file" {
-   sources = ["demo/staging/cloudwatch-config.json", "demo/staging/demo-0.0.1-SNAPSHOT.jar"]
+   sources = ["demo/cloudwatch-config.json", "demo/target/demo-0.0.1-SNAPSHOT.jar"]
     destination = "/home/ubuntu/"
   }
 
