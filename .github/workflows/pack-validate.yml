@@ -31,12 +31,16 @@ jobs:
         run: mvn clean install -DskipTests
         working-directory: demo
 
+      - name: Create target directory
+        run: mkdir -p demo/staging
+        working-directory: demo
+
       - name: Package with Maven
         run: |
           pwd
           ls
           mvn -B package --file pom.xml -DskipTests
-          cp /home/runner/work/webapp/webapp/demo/cloudwatch-config.json demo/target/
+          cp /home/runner/work/webapp/webapp/demo/cloudwatch-config.json demo/staging/
         working-directory: demo
 
       - name: List contents of the target directory
