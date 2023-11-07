@@ -36,7 +36,7 @@ jobs:
           pwd
           ls
           mvn -B package --file pom.xml -DskipTests
-          cp demo/cloudwatch-config.json demo/target
+          cp /home/runner/work/webapp/webapp/demo/cloudwatch-config.json demo/target/
         working-directory: demo
 
       - name: List contents of the target directory
