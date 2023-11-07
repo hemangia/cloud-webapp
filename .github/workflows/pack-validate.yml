@@ -32,8 +32,17 @@ jobs:
         working-directory: demo
 
       - name: Package with Maven
-        run: mvn -B package --file pom.xml -DskipTests
+        run: |
+          pwd
+          ls
+          mvn -B package --file pom.xml -DskipTests
+          cp demo/cloudwatch-config.json demo/target
         working-directory: demo
+
+      - name: List contents of the target directory
+        run: |
+          cd demo/target
+          ls -al
 
       - name: Upload jar file
         uses: actions/upload-artifact@v2
