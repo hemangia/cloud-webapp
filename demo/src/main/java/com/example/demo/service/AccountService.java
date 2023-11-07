@@ -20,8 +20,10 @@ import java.io.FileReader;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.io.BufferedReader;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 @Transactional
@@ -32,6 +34,7 @@ public class AccountService {
 	  public AccountService(AccountRepository accountRepository) {
 	        this.accountRepository = accountRepository;
 	    }
+	  Logger logger = LoggerFactory.getLogger(AccountService.class);
 	 
 	  @Autowired
 	    private BCryptPasswordEncoder passwordEncoder;
@@ -43,26 +46,35 @@ public class AccountService {
 		             List<CSVRecord> records = csvParser.getRecords();
 		    	 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		         Date currentDate = Calendar.getInstance().getTime();
+		         logger.info("AccountService: reading account information from CSV file");
 
-
-		            for (CSVRecord csvRecord : records) {
-		                String firstName = csvRecord.get("first_name");
-		                String lastName = csvRecord.get("last_name");
+		         for (CSVRecord csvRecord : records) {
 		                String email = csvRecord.get("email");
-		                String password = csvRecord.get("password");
 
+		                // Check if the account with this email already exists in the database
+		                Optional<Account> existingAccount = accountRepository.findByEmail(email);
 
-		                Account account = new Account();
-		                account.setFirst_name(firstName);
-		                account.setLast_name(lastName);
-		                account.setEmail(email);
-		                String hashedPassword = passwordEncoder.encode(password);
-		                
-		                account.setPassword(hashedPassword);
-		                account.setAccount_created(currentDate);
-		                account.setAccount_updated(currentDate);
+		                if (!existingAccount.isPresent()) {
+		                    // Account with this email doesn't exist, so we can insert it
+		                    String firstName = csvRecord.get("first_name");
+		                    String lastName = csvRecord.get("last_name");
+		                    String password = csvRecord.get("password");
 
-		                accountRepository.save(account);
+		                    Account account = new Account();
+		                    account.setFirst_name(firstName);
+		                    account.setLast_name(lastName);
+		                    account.setEmail(email);
+		                    String hashedPassword = passwordEncoder.encode(password);
+
+		                    account.setPassword(hashedPassword);
+		                    account.setAccount_created(currentDate);
+		                    account.setAccount_updated(currentDate);
+
+		                    accountRepository.save(account);
+		                } else {
+		                    // Account with this email already exists, you can log or handle this as needed
+		                    logger.info("Account with email " + email + " already exists in the database. Skipping.");
+		                }
 		            }
 		  
 	  }

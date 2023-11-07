@@ -101,12 +101,13 @@ build {
     "sudo chmod 755 /opt/webapps",
     "sudo groupadd -r appgroup",
     "sudo useradd -d /opt/webapps -r -s /bin/false -g appgroup devappuser",
- "echo -e '\n[Unit]\nDescription=Manage JAVA service\n\n[Service]\nWorkingDirectory=/opt/webapps\nExecStart=/bin/java -jar /opt/webapps/demo-0.0.1-SNAPSHOT.jar -Dspring.config.location=file:/opt/webapps/application.properties\nType=simple\nUser=devappuser\nGroup=appgroup\nRestart=on-failure\nRestartSec=10\n\n[Install]\nWantedBy=cloud-init.target\n' | sudo tee /etc/systemd/system/myapp.service",
+    "echo -e '\n[Unit]\nDescription=Manage JAVA service\n\n[Service]\nWorkingDirectory=/opt/webapps\nExecStart=/bin/java -jar /opt/webapps/demo-0.0.1-SNAPSHOT.jar -Dspring.config.location=file:/opt/webapps/application.properties\nType=simple\nUser=devappuser\nGroup=appgroup\nRestart=on-failure\nRestartSec=10\n\n[Install]\nWantedBy=cloud-init.target\n' | sudo tee /etc/systemd/system/myapp.service",
      "sudo chown -R devappuser:appgroup /opt/webapps",
     "sudo pwd",
     "sudo ls -lrt",
     "sudo pwd",
     "sudo cp /home/ubuntu/demo-0.0.1-SNAPSHOT.jar /opt/webapps/.",
+    "sudo mv /home/ubuntu/cloudwatch-config.json /opt/webapps/.",
     "cd /opt/webapps",
     "sudo pwd",
     "ls -lrt",
@@ -114,7 +115,11 @@ build {
     "sudo systemctl daemon-reload",
     "sudo systemctl start myapp.service",
     "sudo systemctl enable myapp.service",
-    "sudo systemctl status myapp.service"
+    "sudo systemctl status myapp.service",
+    "sudo wget https://s3.us-west-2.amazonaws.com/amazoncloudwatch-agent-us-west-2/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb",
+    "sudo dpkg -i -E ./amazon-cloudwatch-agent.deb",
+    "sudo chmod 755 cloudwatch-config.json",
+    "sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/webapps/cloudwatch-config.json"
   ]
 }
 

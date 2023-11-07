@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -30,6 +32,7 @@ import org.springframework.http.HttpStatus.Series;
 import com.example.demo.entity.Assignment;
 import com.example.demo.exception.AssignmentNotFoundException;
 import com.example.demo.exception.UserNotFoundException;
+import com.example.demo.metrics.WebappAppMetrics;
 import com.example.demo.repository.AccountRepository;
 import com.example.demo.repository.AssignmentRepository;
 import com.example.demo.service.AccountService;
@@ -44,6 +47,17 @@ public class AssignmentController {
 	@Autowired
 	private AccountRepository accountRepository;
 	
+
+    Logger logger = LoggerFactory.getLogger(AssignmentController.class);
+    @Autowired
+    WebappAppMetrics webappAppMetrics;
+    
+    private static final String GET_ALL_ASSIGNMENTS = "getAllAssignment";
+    private static final String GET_ASSIGNMENT_BY_ID = "getAssignmentById";
+    private static final String CREATE_USER = "createUser";
+    private static final String UPDATE_USER = "updateUser";
+    private static final String DELETE_USER = "deleteUser";
+    
 	
 	  private final AuthService authService;
 	  @Autowired
@@ -55,6 +69,11 @@ public class AssignmentController {
 	  public ResponseEntity<List<Assignment>> getAllAssignment(
 	      @RequestHeader(name = HttpHeaders.AUTHORIZATION) String authorizationHeader
 	  ) {
+		  
+	      logger.info("AssignmentController: Called Get All Assignments API");
+	      logger.info(authorizationHeader);
+	      webappAppMetrics.addCount(GET_ALL_ASSIGNMENTS);
+	        
 	      // Extract the Basic Auth credentials from the header
 	      String[] credentials = extractBasicAuthCredentials(authorizationHeader);
 
@@ -66,6 +85,8 @@ public class AssignmentController {
 
 	          if (isAuthenticated) {
 	              List<Assignment> assignments = this.assignmentRepository.findAll();
+	              logger.info("All assignment info fetched from DB");
+	            
 	              return ResponseEntity.ok(assignments);
 	          } else {
 	              // Authentication failed
@@ -83,6 +104,11 @@ public class AssignmentController {
 	      @PathVariable(value = "id") UUID id,
 	      @RequestHeader(name = HttpHeaders.AUTHORIZATION) String authorizationHeader
 	  ) {
+		  
+	      logger.info("AssignmentController: Called Get Assignment ID API");
+	      logger.info(authorizationHeader);
+	      webappAppMetrics.addCount(GET_ASSIGNMENT_BY_ID);
+	      
 	      // Extract the Basic Auth credentials from the header
 	      String[] credentials = extractBasicAuthCredentials(authorizationHeader);
 
@@ -95,6 +121,9 @@ public class AssignmentController {
 	          if (isAuthenticated) {
 	              Assignment assignment = this.assignmentRepository.findById(id)
 	                      .orElseThrow(() -> new AssignmentNotFoundException("Assignment not found with id :" + id));
+	              
+	              logger.info("Assignment with id  " + id + " info fetched from DB");
+	              
 	              return ResponseEntity.ok(assignment);
 	          } else {
 	              // Authentication failed
@@ -113,6 +142,11 @@ public class AssignmentController {
 	    @RequestBody Assignment assignment,
 	    @RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader
 	) {
+		
+		  logger.info("AssignmentController: Called Create User API");
+	      logger.info(authorizationHeader);
+	      webappAppMetrics.addCount(CREATE_USER);
+	      
 	    // Extract the Basic Auth credentials from the header
 	    String[] credentials = extractBasicAuthCredentials(authorizationHeader);
 
@@ -133,6 +167,9 @@ public class AssignmentController {
 	                Account account = accountOptional.get();
 	                assignment.setAccount(account);
 	                Assignment savedAssignment = assignmentRepository.save(assignment); // Save the assignment with associated account
+	               
+	                logger.info("Assignment with Name: " + savedAssignment.getName() + " info saved intp DB");
+	                
 	                return ResponseEntity.status(HttpStatus.CREATED).build();
 	            } else {
 	                // Account not found for the provided username
@@ -167,6 +204,11 @@ public class AssignmentController {
 	    @PathVariable("id") UUID id, // Change the data type to UUID
 	    @RequestHeader(name = HttpHeaders.AUTHORIZATION) String authorizationHeader
 	) {
+		
+		  logger.info("AssignmentController: Called Update User API");
+	      logger.info(authorizationHeader);
+	      webappAppMetrics.addCount(UPDATE_USER);
+	      
 	    // Extract the Basic Auth credentials from the header
 	    String[] credentials = extractBasicAuthCredentials(authorizationHeader);
 
@@ -192,7 +234,7 @@ public class AssignmentController {
 
 	                // Save the updated assignment
 	                Assignment savedAssignment = assignmentRepository.save(existingAssignment);
-
+	                logger.info("Assignment with Name: " + savedAssignment.getName() + " info updated into DB");
 	                return ResponseEntity.ok(savedAssignment);
 	            } else {
 	                // User is not authorized to update this assignment
@@ -216,6 +258,10 @@ public class AssignmentController {
 	) {
 	    // Extract the Basic Auth credentials from the header
 	    String[] credentials = extractBasicAuthCredentials(authorizationHeader);
+	    
+		  logger.info("AssignmentController: Called Delete User API");
+	      logger.info(authorizationHeader);
+	      webappAppMetrics.addCount(DELETE_USER);
 
 	    if (credentials.length == 2) {
 	        String username = credentials[0];
@@ -231,6 +277,7 @@ public class AssignmentController {
 	                try {
 	                    // Attempt to delete the assignment
 	                    assignmentRepository.deleteById(id);
+	                    logger.info("Assignment with id: " + id + " info deleted from DB");
 	                    return ResponseEntity.noContent().build();
 	                } catch (EmptyResultDataAccessException e) {
 	                    // Assignment with the given ID was not found
