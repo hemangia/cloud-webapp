@@ -71,7 +71,7 @@ public class AssignmentController {
 	  ) {
 		  
 	      logger.info("AssignmentController: Called Get All Assignments API");
-	      logger.info(authorizationHeader);
+	   //   logger.info(authorizationHeader);
 	      webappAppMetrics.addCount(GET_ALL_ASSIGNMENTS);
 	        
 	      // Extract the Basic Auth credentials from the header
@@ -106,7 +106,7 @@ public class AssignmentController {
 	  ) {
 		  
 	      logger.info("AssignmentController: Called Get Assignment ID API");
-	      logger.info(authorizationHeader);
+	    //  logger.info(authorizationHeader);
 	      webappAppMetrics.addCount(GET_ASSIGNMENT_BY_ID);
 	      
 	      // Extract the Basic Auth credentials from the header
@@ -144,7 +144,7 @@ public class AssignmentController {
 	) {
 		
 		  logger.info("AssignmentController: Called Create User API");
-	      logger.info(authorizationHeader);
+	     // logger.info(authorizationHeader);
 	      webappAppMetrics.addCount(CREATE_USER);
 	      
 	    // Extract the Basic Auth credentials from the header
@@ -206,7 +206,7 @@ public class AssignmentController {
 	) {
 		
 		  logger.info("AssignmentController: Called Update User API");
-	      logger.info(authorizationHeader);
+	     // logger.info(authorizationHeader);
 	      webappAppMetrics.addCount(UPDATE_USER);
 	      
 	    // Extract the Basic Auth credentials from the header
@@ -260,7 +260,7 @@ public class AssignmentController {
 	    String[] credentials = extractBasicAuthCredentials(authorizationHeader);
 	    
 		  logger.info("AssignmentController: Called Delete User API");
-	      logger.info(authorizationHeader);
+	   //   logger.info(authorizationHeader);
 	      webappAppMetrics.addCount(DELETE_USER);
 
 	    if (credentials.length == 2) {
