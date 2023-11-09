@@ -7,7 +7,7 @@ on:
 jobs:
   packagebuild:
     runs-on: ubuntu-latest
-
+    if: github.repository == 'csye6225-Hemangi/webapp'
     steps:
       - uses: actions/checkout@v2
         with:
