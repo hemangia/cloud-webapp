@@ -8,6 +8,7 @@ jobs:
   build:
     name: pack validate
     runs-on: ubuntu-latest
+    if: github.repository == 'csye6225-Hemangi/webapp'
 
     permissions:
       contents: read
