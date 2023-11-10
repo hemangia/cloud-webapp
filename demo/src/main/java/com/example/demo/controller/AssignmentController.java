@@ -90,10 +90,12 @@ public class AssignmentController {
 	              return ResponseEntity.ok(assignments);
 	          } else {
 	              // Authentication failed
+	        	  logger.error("Unauthorized to access the records, Please enter correct credentials ");
 	              return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 	          }
 	      } else {
 	          // Invalid Authorization header
+	     	  logger.error("Unauthorized to access the records, Please enter correct credentials ");
 	          return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 	      }
 	  }
@@ -127,10 +129,12 @@ public class AssignmentController {
 	              return ResponseEntity.ok(assignment);
 	          } else {
 	              // Authentication failed
+	         	  logger.error("Unauthorized to access the records, Please enter correct credentials ");
 	              return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 	          }
 	      } else {
 	          // Invalid Authorization header
+	     	  logger.error("Unauthorized to access the records, Please enter correct credentials ");
 	          return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 	      }
 	  }
@@ -173,14 +177,17 @@ public class AssignmentController {
 	                return ResponseEntity.status(HttpStatus.CREATED).build();
 	            } else {
 	                // Account not found for the provided username
+	           	  logger.error("Account not found ");
 	                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 	            }
 	        } else {
 	            // Authentication failed
+	       	  logger.error("Unauthorized to access the records, Please enter correct credentials ");
 	            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 	        }
 	    } else {
 	        // Invalid Authorization header
+	   	  logger.error("Unauthorized to access the records, Please enter correct credentials ");
 	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 	    }
 	}
@@ -238,14 +245,17 @@ public class AssignmentController {
 	                return ResponseEntity.ok(savedAssignment);
 	            } else {
 	                // User is not authorized to update this assignment
+	            	  logger.error("Record is Forbidden ");
 	                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 	            }
 	        } else {
 	            // Authentication failed
+	       	  logger.error("Unauthorized to access the records, Please enter correct credentials ");
 	            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 	        }
 	    } else {
 	        // Invalid Authorization header
+	   	  logger.error("Unauthorized to access the records, Please enter correct credentials ");
 	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 	    }
 	}
@@ -281,18 +291,22 @@ public class AssignmentController {
 	                    return ResponseEntity.noContent().build();
 	                } catch (EmptyResultDataAccessException e) {
 	                    // Assignment with the given ID was not found
+	                	  logger.error("Record Not found ");
 	                    return ResponseEntity.notFound().build();
 	                }
 	            } else {
 	                // User is not authorized to delete this assignment
+	           	  logger.error("Record is Forbidden ");
 	                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 	            }
 	        } else {
 	            // Authentication failed
+	       	  logger.error("Unauthorized to access the records, Please enter correct credentials ");
 	            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 	        }
 	    } else {
 	        // Invalid Authorization header
+	   	  logger.error("Unauthorized to access the records, Please enter correct credentials ");
 	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 	    }
 	}
