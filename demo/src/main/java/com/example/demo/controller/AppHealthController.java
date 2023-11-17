@@ -56,12 +56,13 @@ public class AppHealthController {
 				 logger.info("DB connection is successful: ");
 				
 				
-			
+				 dbConnection.close();
 				return ResponseEntity.ok().build();
 				
 			}
 			else {
 				 logger.info("Service Unavailable: DB connection is unsuccessful: ");
+				 dbConnection.close();
 		
 				return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
 			}
