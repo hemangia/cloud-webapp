@@ -79,7 +79,7 @@ build {
     "sudo apt-get clean",
     "sudo apt update",
     "sudo apt-get install openjdk-17-jdk -y",
-    "export TOMCAT_VERSION=10.1.15",
+    "export TOMCAT_VERSION=10.1.16",
     "sudo groupadd --system tomcat",
     "sudo useradd -d /usr/share/tomcat -r -s /bin/false -g tomcat tomcat",
     "sudo wget https://downloads.apache.org/tomcat/tomcat-10/v$TOMCAT_VERSION/bin/apache-tomcat-$TOMCAT_VERSION.tar.gz",
