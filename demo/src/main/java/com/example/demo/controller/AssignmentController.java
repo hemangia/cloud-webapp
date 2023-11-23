@@ -1,11 +1,14 @@
 package com.example.demo.controller;
 
 import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.TimeZone;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -30,13 +33,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus.Series;
 
 import com.example.demo.entity.Assignment;
+import com.example.demo.entity.Submission;
 import com.example.demo.exception.AssignmentNotFoundException;
 import com.example.demo.exception.UserNotFoundException;
 import com.example.demo.metrics.WebappAppMetrics;
 import com.example.demo.repository.AccountRepository;
 import com.example.demo.repository.AssignmentRepository;
+import com.example.demo.repository.SubmissionRepository;
 import com.example.demo.service.AccountService;
 import com.example.demo.service.AuthService;
+
+import software.amazon.awssdk.services.sns.SnsClient;
+import software.amazon.awssdk.services.sns.model.PublishRequest;
+import software.amazon.awssdk.services.sns.model.PublishResponse;
+
 
 @RestController
 @RequestMapping("/v1/assignments")
@@ -46,6 +56,9 @@ public class AssignmentController {
 	
 	@Autowired
 	private AccountRepository accountRepository;
+	
+	@Autowired
+	private SubmissionRepository submissionRepository ;
 	
 
     Logger logger = LoggerFactory.getLogger(AssignmentController.class);
@@ -310,6 +323,103 @@ public class AssignmentController {
 	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 	    }
 	}
+	
+	@PostMapping("/{id}/submission")
+	public ResponseEntity<Submission> submitAssignment(
+	    @PathVariable("id") UUID assignmentId,
+	    @RequestBody Submission submission,
+	    @RequestHeader(name = HttpHeaders.AUTHORIZATION) String authorizationHeader
+	) {
+	    logger.info("AssignmentController: Called Submit Assignment API");
+	    // logger.info(authorizationHeader);
+	    webappAppMetrics.addCount("submitAssignment");
+
+	    // Extract the Basic Auth credentials from the header
+	    String[] credentials = extractBasicAuthCredentials(authorizationHeader);
+
+	    if (credentials.length == 2) {
+	        String username = credentials[0];
+	        String password = credentials[1];
+
+	        boolean isAuthenticated = authService.authenticate(username, password);
+
+	        if (isAuthenticated) {
+	            Optional<Assignment> assignmentOptional = assignmentRepository.findById(assignmentId);
+
+	            if (assignmentOptional.isPresent()) {
+	                Assignment assignment = assignmentOptional.get();
+
+	                // Check if the authenticated user matches the creator of the assignment
+	                boolean isAuthorized = assignment.getAccount() != null &&
+	                        assignment.getAccount().getEmail() != null &&
+	                        assignment.getAccount().getEmail().equals(username);
+
+	                if (isAuthorized) {
+	                	long submissionCount = submissionRepository.countByAssignmentId(assignmentId);
+
+	                	if (submissionCount < assignment.getNoofattempts()) {
+	                		
+	                		
+	                		Date submissionDate = submission.getSubmissionDate();
+	                		Date deadlinedt = assignment.getDeadline();
+	                		
+	                		Date standardizedSubmissionDate = standardizeDate(submissionDate);
+	                		Date standardizedDeadline = standardizeDate(deadlinedt);
+
+ 
+	                        if (standardizedDeadline != null && standardizedDeadline.before(standardizedSubmissionDate)) {
+	                        	 logger.error("Submission rejected. Due date has passed.");
+	                             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+	                        
+	                        }
+
+	                		
+	                        // Set the assignment for the submission
+	                        submission.setAssignment(assignment);
+
+	                        // Set the submission date
+	                        submission.setSubmissionDate(new Date());
+
+	                        // Set the assignment updated date
+	                        assignment.setAssignment_updated(new Date());
+
+	                        // Save the submission
+	                        Submission savedSubmission = submissionRepository.save(submission);
+	                        logger.info("Submission with id: " + savedSubmission.getId() + " saved into DB");
+	                        
+	                        postUrlToSnsTopic(savedSubmission, username, assignmentId);
+
+
+
+	                        return ResponseEntity.status(HttpStatus.CREATED).body(savedSubmission);
+	                    } else {
+	                        // Too many submission attempts
+	                        logger.error("Exceeded the maximum number of submission attempts for the assignment");
+	                        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
+	                    }
+
+	                } else {
+	                    // User is not authorized to submit to this assignment
+	                    logger.error("Record is Forbidden ");
+	                    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+	                }
+	            } else {
+	                // Assignment not found with the given ID
+	                logger.error("Assignment not found with id: " + assignmentId.toString());
+	                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+	            }
+	        } else {
+	            // Authentication failed
+	            logger.error("Unauthorized to access the records, Please enter correct credentials ");
+	            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+	        }
+	    } else {
+	        // Invalid Authorization header
+	        logger.error("Unauthorized to access the records, Please enter correct credentials ");
+	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+	    }
+	}
+
 
 
 	 
@@ -347,7 +457,41 @@ private boolean userIsAuthorizedToUpdateAssignment(UUID assignmentId, String use
         return false;
     }
 }
+private Date standardizeDate(Date date) {
+    if (date != null) {
+        // Format the date to a common format and set the time zone to UTC (or your preferred time zone)
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        try {
+            return sdf.parse(sdf.format(date));
+        } catch (ParseException e) {
+            // Handle parsing exception as needed
+            e.printStackTrace();
+        }
+    }
+    return null;
+}
 
+
+private void postUrlToSnsTopic(Submission submission, String username, UUID assignmentId) {
+    SnsClient snsClient = SnsClient.create();
+
+    
+    String topicArn = "arn:aws:sns:us-west-2:286957373320:my-assignment-sns-topic.fifo";
+
+   
+    String submissionUrl = submission.getSubmissionUrl();
+
+    // Create the message to be sent to the SNS topic
+    String message = String.format("New submission from user %s for assignment %s. Submission URL: %s",
+            username, assignmentId.toString(), submissionUrl);
+
+    // Publish the message to the SNS topic
+    snsClient.publish(PublishRequest.builder().topicArn(topicArn).message(message).build());
+
+    // Log the SNS response
+    logger.info("Message sent to SNS for assignmentId: " + assignmentId.toString());
+}
 
 
 
