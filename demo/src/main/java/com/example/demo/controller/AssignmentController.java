@@ -389,7 +389,7 @@ public class AssignmentController {
 	                        Submission savedSubmission = submissionRepository.save(submission);
 	                        logger.info("Submission with id: " + savedSubmission.getId() + " saved into DB");
 	                        
-	                        postUrlToSnsTopic(savedSubmission, username, assignmentId);
+	                        postUrlToSnsTopic(savedSubmission, username, assignmentId, assignment.getName());
 
 
 
@@ -475,11 +475,8 @@ private Date standardizeDate(Date date) {
 }
 
 
-private void postUrlToSnsTopic(Submission submission, String username, UUID assignmentId) {
+private void postUrlToSnsTopic(Submission submission, String username, UUID assignmentId, String assignmentName) {
     SnsClient snsClient = SnsClient.create();
-
-    
-   
     
     String topicName = "my-assignment-sns-topic";
 
@@ -491,13 +488,13 @@ private void postUrlToSnsTopic(Submission submission, String username, UUID assi
             .map(Topic::topicArn)
             .orElseThrow(() -> new RuntimeException("SNS topic not found"));
 
-    
    
     String submissionUrl = submission.getSubmissionUrl();
 
     // Create the message to be sent to the SNS topic
-    String message = String.format("New submission from user %s for assignment %s. Submission URL: %s",
-            username, assignmentId.toString(), submissionUrl);
+    String message = String.format("New submission;username=%s;assignmentId=%s;assignmentName=%s;submissionId=%s;submissionUrl=%s",
+            username, assignmentId.toString(),assignmentName,submission.getId().toString(), submissionUrl);
+
 
     // Publish the message to the SNS topic
     snsClient.publish(PublishRequest.builder().topicArn(topicArn).message(message).build());
