@@ -44,8 +44,10 @@ import com.example.demo.service.AccountService;
 import com.example.demo.service.AuthService;
 
 import software.amazon.awssdk.services.sns.SnsClient;
+import software.amazon.awssdk.services.sns.model.ListTopicsResponse;
 import software.amazon.awssdk.services.sns.model.PublishRequest;
 import software.amazon.awssdk.services.sns.model.PublishResponse;
+import software.amazon.awssdk.services.sns.model.Topic;
 
 
 @RestController
@@ -477,8 +479,19 @@ private void postUrlToSnsTopic(Submission submission, String username, UUID assi
     SnsClient snsClient = SnsClient.create();
 
     
-    String topicArn = "arn:aws:sns:us-west-2:286957373320:my-assignment-sns-topic.fifo";
+   
+    
+    String topicName = "my-assignment-sns-topic";
 
+    // Get the ARN of the SNS topic
+    ListTopicsResponse listTopicsResponse = snsClient.listTopics();
+    String topicArn = listTopicsResponse.topics().stream()
+            .filter(topic -> topic.topicArn().endsWith(topicName))
+            .findFirst()
+            .map(Topic::topicArn)
+            .orElseThrow(() -> new RuntimeException("SNS topic not found"));
+
+    
    
     String submissionUrl = submission.getSubmissionUrl();
 
