@@ -41,6 +41,11 @@ public class Submission {
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "submission_date")
     private Date submissionDate;
+    
+    
+    
+    @Column(name = "submission_number")
+    private int submissionNumber;
 
     // Other fields and methods
 
@@ -78,6 +83,14 @@ public class Submission {
 
     public void setSubmissionDate(Date submissionDate) {
         this.submissionDate = submissionDate;
+    }
+    
+    public int getSubmissionNumber() {
+        return submissionNumber;
+    }
+
+    public void setSubmissionNumber(int submissionNumber) {
+        this.submissionNumber = submissionNumber;
     }
 
     // Other getter and setter methods

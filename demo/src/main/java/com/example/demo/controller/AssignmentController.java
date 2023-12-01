@@ -14,6 +14,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -72,6 +73,9 @@ public class AssignmentController {
     private static final String CREATE_USER = "createUser";
     private static final String UPDATE_USER = "updateUser";
     private static final String DELETE_USER = "deleteUser";
+    
+    @Value("${sns_topic_name}")
+    private String snsTopicName;
     
 	
 	  private final AuthService authService;
@@ -328,9 +332,8 @@ public class AssignmentController {
 	
 	@PostMapping("/{id}/submission")
 	public ResponseEntity<Submission> submitAssignment(
-	    @PathVariable("id") UUID assignmentId,
-	    @RequestBody Submission submission,
-	    @RequestHeader(name = HttpHeaders.AUTHORIZATION) String authorizationHeader
+	        @PathVariable("id") UUID assignmentId,
+	        @RequestHeader(name = HttpHeaders.AUTHORIZATION) String authorizationHeader
 	) {
 	    logger.info("AssignmentController: Called Submit Assignment API");
 	    // logger.info(authorizationHeader);
@@ -357,47 +360,46 @@ public class AssignmentController {
 	                        assignment.getAccount().getEmail().equals(username);
 
 	                if (isAuthorized) {
-	                	long submissionCount = submissionRepository.countByAssignmentId(assignmentId);
+	                    long submissionCount = submissionRepository.countByAssignmentId(assignmentId);
 
-	                	if (submissionCount < assignment.getNoofattempts()) {
-	                		
-	                		
-	                		Date submissionDate = submission.getSubmissionDate();
-	                		Date deadlinedt = assignment.getDeadline();
-	                		
-	                		Date standardizedSubmissionDate = standardizeDate(submissionDate);
-	                		Date standardizedDeadline = standardizeDate(deadlinedt);
+	                    if (submissionCount < assignment.getNoofattempts()) {
 
- 
-	                        if (standardizedDeadline != null && standardizedDeadline.before(standardizedSubmissionDate)) {
-	                        	 logger.error("Submission rejected. Due date has passed.");
-	                             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-	                        
+	                        Date deadlinedt = assignment.getDeadline();
+
+	                        Date standardizedDeadline = standardizeDate(deadlinedt);
+
+	                        if (standardizedDeadline != null && standardizedDeadline.before(new Date())) {
+	                            logger.error("Submission rejected. Due date has passed.");
+	                            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 	                        }
 
-	                		
+	                        // Create a new submission
+	                        Submission submission = new Submission();
+	                        
 	                        // Set the assignment for the submission
 	                        submission.setAssignment(assignment);
 
-	                        // Set the submission date
+	                        // Set the submission date to the current date
 	                        submission.setSubmissionDate(new Date());
 
 	                        // Set the assignment updated date
 	                        assignment.setAssignment_updated(new Date());
 
+	                        // Set the submission number
+	                        long submissionNumber = submissionRepository.countByAssignmentId(assignmentId) + 1;
+	                        submission.setSubmissionNumber((int) submissionNumber);
+
 	                        // Save the submission
 	                        Submission savedSubmission = submissionRepository.save(submission);
 	                        logger.info("Submission with id: " + savedSubmission.getId() + " saved into DB");
-	                        
-	                        postUrlToSnsTopic(savedSubmission, username, assignmentId, assignment.getName());
 
-
+	                        postUrlToSnsTopic(savedSubmission, username, assignmentId, assignment.getName(), snsTopicName);
 
 	                        return ResponseEntity.status(HttpStatus.CREATED).body(savedSubmission);
 	                    } else {
 	                        // Too many submission attempts
 	                        logger.error("Exceeded the maximum number of submission attempts for the assignment");
-	                        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
+	                        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 	                    }
 
 	                } else {
@@ -475,15 +477,15 @@ private Date standardizeDate(Date date) {
 }
 
 
-private void postUrlToSnsTopic(Submission submission, String username, UUID assignmentId, String assignmentName) {
+private void postUrlToSnsTopic(Submission submission, String username, UUID assignmentId, String assignmentName, @Value("${sns_topic_name}") String snsTopicName) {
     SnsClient snsClient = SnsClient.create();
     
-    String topicName = "my-assignment-sns-topic";
+    //String topicName = "my-assignment-sns-topic";
 
     // Get the ARN of the SNS topic
     ListTopicsResponse listTopicsResponse = snsClient.listTopics();
     String topicArn = listTopicsResponse.topics().stream()
-            .filter(topic -> topic.topicArn().endsWith(topicName))
+            .filter(topic -> topic.topicArn().endsWith(snsTopicName))
             .findFirst()
             .map(Topic::topicArn)
             .orElseThrow(() -> new RuntimeException("SNS topic not found"));
