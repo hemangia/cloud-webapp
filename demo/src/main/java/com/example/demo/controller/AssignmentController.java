@@ -333,6 +333,7 @@ public class AssignmentController {
 	@PostMapping("/{id}/submission")
 	public ResponseEntity<Submission> submitAssignment(
 	        @PathVariable("id") UUID assignmentId,
+	        @RequestBody Submission submission,
 	        @RequestHeader(name = HttpHeaders.AUTHORIZATION) String authorizationHeader
 	) {
 	    logger.info("AssignmentController: Called Submit Assignment API");
@@ -372,9 +373,7 @@ public class AssignmentController {
 	                            logger.error("Submission rejected. Due date has passed.");
 	                            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 	                        }
-
-	                        // Create a new submission
-	                        Submission submission = new Submission();
+	                       
 	                        
 	                        // Set the assignment for the submission
 	                        submission.setAssignment(assignment);
