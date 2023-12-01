@@ -393,7 +393,7 @@ public class AssignmentController {
 	                        Submission savedSubmission = submissionRepository.save(submission);
 	                        logger.info("Submission with id: " + savedSubmission.getId() + " saved into DB");
 
-	                        postUrlToSnsTopic(savedSubmission, username, assignmentId, assignment.getName(), snsTopicName);
+	                        postUrlToSnsTopic(savedSubmission, username, assignmentId, assignment.getName(), snsTopicName, submissionNumber);
 
 	                        return ResponseEntity.status(HttpStatus.CREATED).body(savedSubmission);
 	                    } else {
@@ -477,7 +477,7 @@ private Date standardizeDate(Date date) {
 }
 
 
-private void postUrlToSnsTopic(Submission submission, String username, UUID assignmentId, String assignmentName, @Value("${sns_topic_name}") String snsTopicName) {
+private void postUrlToSnsTopic(Submission submission, String username, UUID assignmentId, String assignmentName, @Value("${sns_topic_name}") String snsTopicName, long submissionNumber) {
     SnsClient snsClient = SnsClient.create();
     
     //String topicName = "my-assignment-sns-topic";
@@ -494,8 +494,8 @@ private void postUrlToSnsTopic(Submission submission, String username, UUID assi
     String submissionUrl = submission.getSubmissionUrl();
 
     // Create the message to be sent to the SNS topic
-    String message = String.format("New submission;username=%s;assignmentId=%s;assignmentName=%s;submissionId=%s;submissionUrl=%s",
-            username, assignmentId.toString(),assignmentName,submission.getId().toString(), submissionUrl);
+    String message = String.format("New submission;username=%s;assignmentId=%s;assignmentName=%s;submissionId=%s;submissionUrl=%s;submissionNo=%d",
+            username, assignmentId.toString(),assignmentName,submission.getId().toString(), submissionUrl, submissionNumber);
 
 
     // Publish the message to the SNS topic
