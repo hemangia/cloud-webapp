@@ -50,7 +50,7 @@ source "amazon-ebs" "my-ami" {
   instance_type = "t2.micro"
   source_ami    = "${var.source_ami}"
   ssh_username  = "${var.ssh_username}"
- # subnet_id     = "${var.subnet_id}"
+ 
 
   launch_block_device_mappings {
     delete_on_termination = true
@@ -92,8 +92,6 @@ build {
     "sudo systemctl start tomcat.service",
     "sudo systemctl enable tomcat.service",
     "sudo systemctl status tomcat.service",
-    "#ss -ltn",
-    "#sudo ufw allow 8080/tcp",
     "sudo apt-get install nginx -y",
  "sudo apt-cache search mysql-server",
     "sudo apt info -a mysql-server-8.0",
@@ -101,12 +99,6 @@ build {
     "sudo systemctl is-enabled mysql.service",
     "sudo systemctl start mysql.service",
     "sudo systemctl status mysql.service",
-    "#export pwd=Test1234",
-    "#echo $pwd",
-   "#sudo mysql -uroot -p$pwd --connect-expired-password -e \"ALTER USER 'root'@'localhost' IDENTIFIED WITH 'mysql_native_password' BY 'Test1234'\"",
-    "#sudo systemctl restart mysql.service",
-    "#sudo systemctl status mysql.service",
-    "#sudo mysql -uroot -pTest1234 -e \"CREATE DATABASE IF NOT EXISTS csye6225\"",
     "sudo apt install maven -y",
     "sudo pwd",
     "sudo ls -lrt",
