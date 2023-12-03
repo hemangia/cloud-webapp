@@ -10,10 +10,10 @@ variable "ssh_username" {
   type    = string
   default = "ubuntu"
 }
-#variable "subnet_id" {
-#  type    = string
-#  default = "subnet-04885b32aa1bb325d"
-#}
+variable "subnet_id" {
+  type    = string
+  default = "subnet-04885b32aa1bb325d"
+}
 variable "profile" {
   type    = string
   default = "devuser"
@@ -50,6 +50,7 @@ source "amazon-ebs" "my-ami" {
   instance_type = "t2.micro"
   source_ami    = "${var.source_ami}"
   ssh_username  = "${var.ssh_username}"
+  subnet_id     = "${var.subnet_id}"
  
 
   launch_block_device_mappings {
@@ -93,12 +94,6 @@ build {
     "sudo systemctl enable tomcat.service",
     "sudo systemctl status tomcat.service",
     "sudo apt-get install nginx -y",
- "sudo apt-cache search mysql-server",
-    "sudo apt info -a mysql-server-8.0",
-    "sudo apt-get install mysql-server-8.0 -y",
-    "sudo systemctl is-enabled mysql.service",
-    "sudo systemctl start mysql.service",
-    "sudo systemctl status mysql.service",
     "sudo apt install maven -y",
     "sudo pwd",
     "sudo ls -lrt",
