@@ -104,7 +104,6 @@ jobs:
             aws autoscaling start-instance-refresh --auto-scaling-group-name $latestAutoScalingGroupName
 
       - name: Wait for Instance Refresh to Complete
-
         run: |
           while true; do
             refresh_status=$(aws autoscaling describe-instance-refreshes --auto-scaling-group-name $latestAutoScalingGroupName --query 'InstanceRefreshes[-1].Status' --output text)
@@ -117,7 +116,6 @@ jobs:
               sleep 60
             fi
           done
-
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEMO }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEMO }}
