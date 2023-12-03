@@ -85,18 +85,29 @@ jobs:
 
       - name: Create new Launch Template version and refresh instances
         run: |
-          latest_ami_id=$(aws ec2 describe-images --owners 097171053993 --query 'Images | [-1].ImageId' --output text)
-          aws ec2 create-launch-template-version --launch-template-name YourLaunchTemplateName --version-description "New version with latest AMI" --source-version "$latest_ami_id"
-
-
-          # Issue an instance refresh to the autoscaling group
-          aws autoscaling start-instance-refresh --auto-scaling-group-name MyautoScalingGroup
+          run: |
+          latestAmi=$(aws ec2 describe-images --filters "Name=owner-id,Values=286957373320" --query "sort_by(Images, &CreationDate)[-1].[ImageId]" --output "text")
+          echo "latest ami:"
+          echo $latestAmi
+          latestLaunchTemplateId=$(aws ec2 describe-launch-templates --query "sort_by(LaunchTemplates, &CreateTime)[-1].[LaunchTemplateId]" --output "text")
+          if [[ ${latestLaunchTemplateId} != 'None' ]]; then
+            echo "latest template id:"
+            echo $latestLaunchTemplateId
+            latestAutoScalingGroupName=$(aws autoscaling describe-auto-scaling-groups --query "sort_by(AutoScalingGroups, &CreatedTime)[-1].[AutoScalingGroupName]" --output "text")
+            echo "latest AutoScalingGroupName:"
+            echo $latestAutoScalingGroupName
+            aws autoscaling update-auto-scaling-group --auto-scaling-group-name  $latestAutoScalingGroupName --launch-template LaunchTemplateId=$latestLaunchTemplateId,Version='$Latest'
+            latestVersion=$(aws ec2 describe-launch-templates --launch-template-id $latestLaunchTemplateId --query "sort_by(LaunchTemplates, &CreateTime)[-1].[LatestVersionNumber]" --output "text")
+            echo "latestVersion:"
+            echo $latestVersion
+            aws ec2 create-launch-template-version --launch-template-id $latestLaunchTemplateId --version-description latest --source-version 1 --launch-template-data "ImageId=$latestAmi"
+            aws autoscaling start-instance-refresh --auto-scaling-group-name $latestAutoScalingGroupName
 
       - name: Wait for Instance Refresh to Complete
 
         run: |
           while true; do
-            refresh_status=$(aws autoscaling describe-instance-refreshes --auto-scaling-group-name YourAutoScalingGroupName --query 'InstanceRefreshes[-1].Status' --output text)
+            refresh_status=$(aws autoscaling describe-instance-refreshes --auto-scaling-group-name $latestAutoScalingGroupName --query 'InstanceRefreshes[-1].Status' --output text)
             if [ "$refresh_status" == "Successful" ]; then
               break
             elif [ "$refresh_status" == "Failed" ]; then
