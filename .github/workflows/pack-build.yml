@@ -85,7 +85,6 @@ jobs:
 
       - name: Create new Launch Template version and refresh instances
         run: |
-          run: |
           latestAmi=$(aws ec2 describe-images --filters "Name=owner-id,Values=286957373320" --query "sort_by(Images, &CreationDate)[-1].[ImageId]" --output "text")
           echo "latest ami:"
           echo $latestAmi
