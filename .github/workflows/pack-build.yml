@@ -95,7 +95,7 @@ jobs:
             latestAutoScalingGroupName=$(aws autoscaling describe-auto-scaling-groups --query "sort_by(AutoScalingGroups, &CreatedTime)[-1].[AutoScalingGroupName]" --output "text")
             echo "latest AutoScalingGroupName:"
             echo $latestAutoScalingGroupName
-            aws autoscaling update-auto-scaling-group --auto-scaling-group-name  MyautoScalingGroup --launch-template LaunchTemplateId=$latestLaunchTemplateId,Version='$Latest'
+            aws autoscaling update-auto-scaling-group --auto-scaling-group-name MyautoScalingGroup --launch-template LaunchTemplateId=$latestLaunchTemplateId,Version='$Latest'
             latestVersion=$(aws ec2 describe-launch-templates --launch-template-id $latestLaunchTemplateId --query "sort_by(LaunchTemplates, &CreateTime)[-1].[LatestVersionNumber]" --output "text")
             echo "latestVersion:"
             echo $latestVersion
