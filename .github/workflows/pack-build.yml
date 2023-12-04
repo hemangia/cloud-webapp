@@ -109,17 +109,25 @@ jobs:
 
       - name: Wait for Instance Refresh to Complete
         run: |
-          while true; do
-            refresh_status=$(aws autoscaling describe-instance-refreshes --auto-scaling-group-name MyautoScalingGroup --query 'InstanceRefreshes[-1].Status' --output text)
-            if [ "$refresh_status" == "Successful" ]; then
-              break
-            elif [ "$refresh_status" == "Failed" ]; then
-              echo "Instance refresh failed."
-              exit 1
-            else
-              sleep 60
-            fi
+          timeout=0
+          max_timeout=600  
+          while [ $timeout -lt $max_timeout ]; do
+          refresh_status=$(aws autoscaling describe-instance-refreshes --auto-scaling-group-name MyautoScalingGroup --query 'InstanceRefreshes[-1].Status' --output text)
+          echo "Refresh status: $refresh_status"
+          if [ "$refresh_status" == "Successful" ]; then
+            break
+          elif [ "$refresh_status" == "Failed" ]; then
+            echo "Instance refresh failed."
+            exit 1
+          else
+            sleep 60
+            timeout=$((timeout + 60))
+          fi
           done
+          if [ $timeout -ge $max_timeout ]; then
+            echo "Timeout exceeded. Instance refresh taking longer than expected."
+            exit 1
+          fi
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEMO }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEMO }}
