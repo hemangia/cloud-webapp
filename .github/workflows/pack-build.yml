@@ -95,27 +95,32 @@ jobs:
             latestAutoScalingGroupName=$(aws autoscaling describe-auto-scaling-groups --query "sort_by(AutoScalingGroups, &CreatedTime)[-1].[AutoScalingGroupName]" --output "text")
             echo "latest AutoScalingGroupName:"
             echo $latestAutoScalingGroupName
+            aws autoscaling update-auto-scaling-group --auto-scaling-group-name  MyautoScalingGroup --launch-template LaunchTemplateId=$latestLaunchTemplateId,Version='$Latest'
             latestVersion=$(aws ec2 describe-launch-templates --launch-template-id $latestLaunchTemplateId --query "sort_by(LaunchTemplates, &CreateTime)[-1].[LatestVersionNumber]" --output "text")
             echo "latestVersion:"
             echo $latestVersion
-            aws autoscaling update-auto-scaling-group --auto-scaling-group-name MyautoScalingGroup --launch-template LaunchTemplateId=$latestLaunchTemplateId,Version=$latestVersion
             aws ec2 create-launch-template-version --launch-template-id $latestLaunchTemplateId --version-description latest --source-version 1 --launch-template-data "ImageId=$latestAmi"
-            refreshId=$(aws autoscaling start-instance-refresh --auto-scaling-group-name MyautoScalingGroup --preferences "InstanceWarmup=200" --query 'InstanceRefreshId' --output 'text')
-            echo "Instance refresh started. Waiting for completion..."
-            while true; do
-              refreshStatus=$(aws autoscaling describe-instance-refreshes --instance-refresh-ids $refreshId --query 'InstanceRefreshes[0].[Status]' --output 'text')
-              echo "Refresh status: $refreshStatus"
-              if [ "$refreshStatus" == "Successful" ]; then
-                echo "Instance refresh completed successfully."
-                break
-              elif [ "$refreshStatus" == "Failed" ]; then
-                echo "Instance refresh failed. Check AWS Console for details."
-                exit 1
-              fi
-              echo "Instance refresh status: $refreshStatus. Waiting..."
-              sleep 60  # Adjust the sleep interval as needed
-            done
+            aws autoscaling start-instance-refresh --auto-scaling-group-name MyautoScalingGroup --preferences "InstanceWarmup=200"
           fi
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEMO }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEMO }}
+          AWS_DEFAULT_REGION: us-west-2
+
+      - name: Wait for Instance Refresh to Complete
+        run: |
+          while true; do
+            refreshStatus=$(aws autoscaling describe-instance-refreshes --auto-scaling-group-name $latestAutoScalingGroupName --query 'InstanceRefreshes[-1].Status' --output text)
+            echo $refreshStatus
+            if [ "$refreshStatus" == "Successful" ]; then
+              break
+            elif [ "$refreshStatus" == "Failed" ]; then
+              echo "Instance refresh failed."
+              exit 1
+            else
+              sleep 60
+            fi
+          done
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEMO }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEMO }}
