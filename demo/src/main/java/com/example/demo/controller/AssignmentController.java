@@ -52,7 +52,7 @@ import software.amazon.awssdk.services.sns.model.Topic;
 
 
 @RestController
-@RequestMapping("/v24/assignments")
+@RequestMapping("/v25/assignments")
 public class AssignmentController {
 	@Autowired
 	private AssignmentRepository assignmentRepository;
