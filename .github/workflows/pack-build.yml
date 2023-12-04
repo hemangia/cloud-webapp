@@ -104,7 +104,7 @@ jobs:
             echo "Instance refresh started. Waiting for completion..."
             while true; do
               refreshStatus=$(aws autoscaling describe-instance-refreshes --instance-refresh-ids $refreshId --query 'InstanceRefreshes[0].[Status]' --output 'text')
-              echo "Refresh status: $refresh_status"
+              echo "Refresh status: $refreshStatus"
               if [ "$refreshStatus" == "Successful" ]; then
                 echo "Instance refresh completed successfully."
                 break
